@@ -5,16 +5,18 @@ from todo.models import Task
 
 # Create your views here.
 def index(request):
-    # もし画面からデータが送られてきたら（POSTメソッド）
     if request.method == 'POST':
         task = Task(
             title=request.POST['title'],
             due_at=make_aware(parse_datetime(request.POST['due_at']))
         )
-        task.save()  # データベースに保存！
+        task.save()
 
-    # データベースからすべてのタスクを取得する
-    tasks = Task.objects.all()
+    # クエリパラメータを判定して並び替える
+    if request.GET.get('order') == 'due':
+        tasks = Task.objects.order_by('due_at')          # 締切の早い順
+    else:
+        tasks = Task.objects.order_by('-posted_at')      # 登録の最新順
 
     context = {
         'tasks': tasks
