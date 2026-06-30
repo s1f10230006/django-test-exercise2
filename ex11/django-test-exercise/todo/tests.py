@@ -1,4 +1,4 @@
-from django.test import TestCase
+from django.test import TestCase, Client  # ← 綺麗に1行にまとめました！
 from django.utils import timezone
 from datetime import datetime
 from todo.models import Task
@@ -27,7 +27,6 @@ class TaskModelTestCase(TestCase):
         self.assertFalse(task.completed)
         self.assertEqual(task.due_at, None)
 
-    #  ここからの3つのテスト関数の前にスペースを入れて、クラスの中に収めました！
     def test_is_overdue_future(self):
         # 締切が未来の場合 -> False
         due = timezone.make_aware(datetime(2024, 6, 30, 23, 59, 59))
@@ -50,3 +49,24 @@ class TaskModelTestCase(TestCase):
         task = Task(title='task1', due_at=None)
         task.save()
         self.assertFalse(task.is_overdue(current))
+
+
+class TodoViewTestCase(TestCase):
+    def test_index_get(self):
+        # GETメソッドで '/' にアクセスした時のテスト
+        client = Client()
+        response = client.get('/')
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.templates[0].name, 'todo/index.html')
+        self.assertEqual(len(response.context['tasks']), 0)
+
+    def test_index_post(self):
+        # POSTメソッドでタスクを送信した時のテスト
+        client = Client()
+        data = {'title': 'Test Task', 'due_at': '2024-06-30 23:59:59'}
+        response = client.post('/', data)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.templates[0].name, 'todo/index.html')
+        self.assertEqual(len(response.context['tasks']), 1)
