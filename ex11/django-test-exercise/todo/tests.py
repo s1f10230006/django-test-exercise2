@@ -1,5 +1,6 @@
 from django.test import TestCase, Client
 from django.utils import timezone
+from django.urls import reverse  # ← ここに追加しました！
 from datetime import datetime
 from todo.models import Task
 
@@ -100,3 +101,15 @@ class TodoViewTestCase(TestCase):
         self.assertEqual(response.templates[0].name, 'todo/index.html')
         self.assertEqual(response.context['tasks'][0], task1)
         self.assertEqual(response.context['tasks'][1], task2)
+
+
+    def test_detail_view_success(self):
+        """詳細ページが正しく表示されるかのテスト"""
+        task = Task.objects.create(title='task1', posted_at=timezone.now())
+        response = self.client.get(reverse('detail', args=(task.id,)))
+        self.assertEqual(response.status_code, 200)
+
+    def test_detail_view_404(self):
+        """存在しないタスクにアクセスしたとき404が返るかのテスト"""
+        response = self.client.get(reverse('detail', args=(100,)))
+        self.assertEqual(response.status_code, 404)
